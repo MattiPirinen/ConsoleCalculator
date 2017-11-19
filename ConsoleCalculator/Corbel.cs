@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows.Forms;
 namespace ConsoleCalculator
 {
-    class Corbel
+    public class Corbel
     {
+        string _CstrengthClass = "";
+        string _SStrengthClass = "";
         double _fck; //concrete strength
         double _fyk; //steel strength
         double _steelArea;
@@ -22,6 +24,10 @@ namespace ConsoleCalculator
         double _fcd;
         double _fyd;
         double _fii1;
+        double _acc = 0.85;
+        double _n;
+        List<Tuple<double, double>> _resistance = new List<Tuple<double, double>> ();
+        List<LoadCase> _loadCases = new List<LoadCase>();
         public double Fck
         {
             get
@@ -32,6 +38,7 @@ namespace ConsoleCalculator
             set
             {
                 _fck = value;
+                UpgradeResults();
             }
         }
         public double Fyk
@@ -44,6 +51,7 @@ namespace ConsoleCalculator
             set
             {
                 _fyk = value;
+                UpgradeResults();
             }
         }
         public double SteelArea
@@ -56,6 +64,7 @@ namespace ConsoleCalculator
             set
             {
                 _steelArea = value;
+                UpgradeResults();
             }
         }
         public double Hc
@@ -68,6 +77,7 @@ namespace ConsoleCalculator
             set
             {
                 _hc = value;
+                UpgradeResults();
             }
         }
         public double B
@@ -80,6 +90,7 @@ namespace ConsoleCalculator
             set
             {
                 _b = value;
+                UpgradeResults();
             }
         }
         public double Cc
@@ -92,6 +103,7 @@ namespace ConsoleCalculator
             set
             {
                 _cc = value;
+                UpgradeResults();
             }
         }
         public double Ac
@@ -104,6 +116,7 @@ namespace ConsoleCalculator
             set
             {
                 _ac = value;
+                UpgradeResults();
             }
         }
         public double A5
@@ -116,6 +129,7 @@ namespace ConsoleCalculator
             set
             {
                 _a5 = value;
+                UpgradeResults();
             }
         }
         public double Hn
@@ -128,6 +142,7 @@ namespace ConsoleCalculator
             set
             {
                 _hn = value;
+                UpgradeResults();
             }
         }
         public double Gammac
@@ -140,6 +155,7 @@ namespace ConsoleCalculator
             set
             {
                 _gammac = value;
+                UpgradeResults();
             }
         }
         public double Gammas
@@ -152,6 +168,7 @@ namespace ConsoleCalculator
             set
             {
                 _gammas = value;
+                UpgradeResults();
             }
         }
         public double Fcd
@@ -164,6 +181,7 @@ namespace ConsoleCalculator
             set
             {
                 _fcd = value;
+                UpgradeResults();
             }
         }
         public double Fyd
@@ -176,6 +194,7 @@ namespace ConsoleCalculator
             set
             {
                 _fyd = value;
+                UpgradeResults();
             }
         }
         public double Fii1
@@ -188,59 +207,193 @@ namespace ConsoleCalculator
             set
             {
                 _fii1 = value;
+                if (_n != 0) calcSteelArea();
+                UpgradeResults();
+                
             }
         }
-
-        List<Tuple<double, double>> resistance_;
-
-        public void calcSteelArea(double diam, int amount)
+        public double N
         {
-            _steelArea = Math.Pow(diam, 2) * Math.PI / 4 * amount;
-        }
-
-
-        public double CalcUtil(double F_ed, double H_ed)
-        {
-            double fcd1 = (1 - _fck / (250 * Math.Pow(10, 6))) * _fcd;
-            double x1 = F_ed / (_b * fcd1);
-            double c = _ac + x1 / 2;
-            double d = _hc - _cc - _fii1 / 2;
-            double h1 = _hc + _hn - d;
-            double M_Eds = F_ed * c + H_ed * h1;
-            double a0 = defa0(M_Eds, fcd1, d);
-            double z = d - a0 / 2;
-            double a4 = Math.Pow(Math.Pow(x1, 2) + Math.Pow(a0, 2), 0.5);
-            double Fc0 = M_Eds / z;
-            double sigmac0 = Fc0 / (_b * a0);
-            double KA_c1 = sigmac0 / fcd1;
-            double angle = Math.Atan(z / c);
-            double Fc = Math.Cos(angle) * F_ed + Math.Sin(angle) * Fc0;
-            double fcd2 = 0.85*(1 - _fck / (250 * Math.Pow(10, 6))) * _fcd;
-            double sigmac5 = F_ed / (_b * _a5) * (1 + Math.Pow(H_ed / F_ed, 2));
-            double KA_c2 = sigmac5 / fcd2;
-            double u = 2 * _cc;
-            double a2 = _a5 * Math.Sin(angle) + u * Math.Cos(angle);
-            double sigmac4 = Fc / (a2 * _b);
-            double F_t = Fc0 + H_ed;
-            double KA_c3 = sigmac4 / fcd2;
-            double KA_c = Math.Max(KA_c2, KA_c3);
-            double KA_s = F_t / _fyd / _steelArea;
-            double KA_max = Math.Max(KA_c, KA_s);
-            return KA_max;
-
-
-
-        }
-        
-        private double defa0(double M_Eds,double fcd1,double d)
-        {
-            double a0 = 0.001;
-            while (M_Eds/(d-a0/2)/(_b*a0) > fcd1)
+            get
             {
-                a0 += 0.001;
+                return _n;
             }
-            return a0;
+
+            set
+            {
+                _n = value;
+                if (!Double.IsNaN(_fii1)) calcSteelArea();
+                UpgradeResults();
+            }
         }
+        public double acc { get; private set; }
+        public string Name { get; set; }
+        public string CStrengthClass
+        {
+            get
+            {
+                return _CstrengthClass;
+            }
+
+            set
+            {
+                _CstrengthClass = value;
+                switch (value)
+                {
+                    case "C20/25":
+                        _fck = 20*Math.Pow(10,6);
+                        break;
+                    case "C25/30":
+                        _fck = 25*Math.Pow(10, 6);
+                        break;
+                    case "C30/37":
+                        _fck = 30 * Math.Pow(10, 6);
+                        break;
+                    case "C35/45":
+                        _fck = 35 * Math.Pow(10, 6);
+                        break;
+                    case "C40/50":
+                        _fck = 40 * Math.Pow(10, 6);
+                        break;
+                    case "C50/60":
+                        _fck = 50 * Math.Pow(10, 6);
+                        break;
+                    default:
+                        _fck = 0;
+                        MessageBox.Show("No such concrete strengthClass", "Error", MessageBoxButtons.OK);
+                        break;
+                    
+                }
+                UpgradeResults();
+            }
+        }
+        public string SStrengthClass
+        {
+            get
+            {
+                return _SStrengthClass;
+            }
+
+            set
+            {
+                _SStrengthClass = value;
+                switch (value)
+                {
+                    case "B500B":
+                        _fyk = 500 * Math.Pow(10, 6);
+                        break;
+                    default:
+                        _fyk = 0 * Math.Pow(10, 6);
+                        MessageBox.Show("No such steel strengthClass", "Error", MessageBoxButtons.OK);
+                        break;
+                }
+
+                UpgradeResults();
+            }
+        }
+
+        public List<Tuple<double, double>> Resistance
+        {
+            get
+            {
+                return _resistance;
+            }
+
+            set
+            {
+                _resistance = value;
+            }
+        }
+        public List<LoadCase> loadCases { get { return _loadCases; } }
+
+        public double Acc
+        {
+            get
+            {
+                return _acc;
+            }
+        }
+
+        public Corbel(string name)
+        {
+            Name = name;
+        }
+
+        private bool AllValuesDefined()
+        {
+            return !Double.IsNaN(_fck) &&
+                !Double.IsNaN(_fyk) &&
+                !Double.IsNaN(_steelArea) &&
+                !Double.IsNaN(_fck) &&
+                !Double.IsNaN(_hc) &&
+                !Double.IsNaN(_b) &&
+                !Double.IsNaN(_cc) &&
+                !Double.IsNaN(_ac) &&
+                !Double.IsNaN(_a5) &&
+                !Double.IsNaN(_hn) &&
+                !Double.IsNaN(_gammac) &&
+                !Double.IsNaN(_gammas) &&
+                !Double.IsNaN(_fcd) &&
+                !Double.IsNaN(_fyd) &&
+                !Double.IsNaN(_fii1) &&
+                !Double.IsNaN(_acc);
+        }
+
+        private void UpgradeResults()
+        {
+            if (AllValuesDefined())
+            {
+                createGraph();
+                foreach (LoadCase lc in _loadCases)
+                {
+                    lc.CalcUtil();
+                }
+            }
+        }
+
+
+        public void calcSteelArea()
+        {
+            _steelArea = Math.Pow(_fii1, 2) * Math.PI / 4 * _n;
+        }
+
+
+
+        
+        public void createGraph()
+        {
+            Resistance = new List<Tuple<double, double>>();
+            double hedAdd = 1000;
+            double fedAdd = 1000;
+            double hedSub = 4000;
+
+            double H_Ed = 0;
+            double F_Ed = 10000;
+            double KA = 0;
+            do
+            {
+                do
+                {
+                    LoadCase lc = new LoadCase(F_Ed, H_Ed, this);
+                    KA = lc.KA_max;
+                    H_Ed += hedAdd;
+                } while (KA < 1);
+                Resistance.Add(new Tuple<Double, Double>(H_Ed-hedAdd, F_Ed));
+
+
+                F_Ed += fedAdd;
+                H_Ed -= hedSub;
+            } while (H_Ed > 0);
+
+        }
+
+
+        public void AddLoadCase(double F_Ed,double H_Ed)
+        {
+            
+            _loadCases.Add(new LoadCase(F_Ed, H_Ed, this));
+        }
+
 
         public void printToForm()
         {
