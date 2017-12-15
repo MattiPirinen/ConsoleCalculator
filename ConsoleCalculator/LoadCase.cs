@@ -8,6 +8,7 @@ namespace ConsoleCalculator
 {
     public class LoadCase
     {
+        public string Name { get; set; }
 
         private double _F_Ed;
         private double _H_Ed;
@@ -56,13 +57,15 @@ namespace ConsoleCalculator
         public double A_svaad { get; private set; }
         List<Tuple<double, double>> _resistance = new List<Tuple<double, double>>();
         private Corbel _cb;
+        
 
 
-        public LoadCase(double f_ed,double h_ed,Corbel cb)
+        public LoadCase(double f_ed,double h_ed,Corbel cb,string name)
         {
             _cb = cb;
             F_Ed = f_ed;
             H_Ed = h_ed;
+            Name = name;
             CalcUtil();
         }
 

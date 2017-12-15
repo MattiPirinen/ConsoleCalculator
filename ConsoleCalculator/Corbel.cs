@@ -155,6 +155,7 @@ namespace ConsoleCalculator
             set
             {
                 _gammac = value;
+                calc_fcd();
                 UpgradeResults();
             }
         }
@@ -168,6 +169,7 @@ namespace ConsoleCalculator
             set
             {
                 _gammas = value;
+                calc_fyd();
                 UpgradeResults();
             }
         }
@@ -291,6 +293,13 @@ namespace ConsoleCalculator
                 UpgradeResults();
             }
         }
+        public double Acc
+        {
+            get
+            {
+                return _acc;
+            }
+        }
 
         public List<Tuple<double, double>> Resistance
         {
@@ -306,37 +315,44 @@ namespace ConsoleCalculator
         }
         public List<LoadCase> loadCases { get { return _loadCases; } }
 
-        public double Acc
-        {
-            get
-            {
-                return _acc;
-            }
-        }
 
         public Corbel(string name)
         {
             Name = name;
+            _gammac = 1.5;
+            _gammas = 1.15;
         }
+
+
+        private void calc_fcd()
+        {
+            _fcd = _fck * _acc / _gammac;
+        }
+
+        private void calc_fyd()
+        {
+            _fyd = _fyk / _gammas;
+        }
+
+
 
         private bool AllValuesDefined()
         {
-            return !Double.IsNaN(_fck) &&
-                !Double.IsNaN(_fyk) &&
-                !Double.IsNaN(_steelArea) &&
-                !Double.IsNaN(_fck) &&
-                !Double.IsNaN(_hc) &&
-                !Double.IsNaN(_b) &&
-                !Double.IsNaN(_cc) &&
-                !Double.IsNaN(_ac) &&
-                !Double.IsNaN(_a5) &&
-                !Double.IsNaN(_hn) &&
-                !Double.IsNaN(_gammac) &&
-                !Double.IsNaN(_gammas) &&
-                !Double.IsNaN(_fcd) &&
-                !Double.IsNaN(_fyd) &&
-                !Double.IsNaN(_fii1) &&
-                !Double.IsNaN(_acc);
+            return _fck != 0 &&
+                _fyk != 0 &&
+                _steelArea != 0 &&
+                _hc != 0 &&
+                _b != 0 &&
+                _cc != 0 &&
+                _ac != 0 &&
+                _a5 != 0 &&
+                _hn != 0 &&
+                _gammac != 0 &&
+                _gammas != 0 &&
+                _fcd != 0 &&
+                _fyd != 0 &&
+                _fii1 != 0 &&
+                _acc != 0;
         }
 
         private void UpgradeResults()
@@ -374,7 +390,7 @@ namespace ConsoleCalculator
             {
                 do
                 {
-                    LoadCase lc = new LoadCase(F_Ed, H_Ed, this);
+                    LoadCase lc = new LoadCase(F_Ed, H_Ed, this,"temp");
                     KA = lc.KA_max;
                     H_Ed += hedAdd;
                 } while (KA < 1);
@@ -388,10 +404,9 @@ namespace ConsoleCalculator
         }
 
 
-        public void AddLoadCase(double F_Ed,double H_Ed)
+        public void AddLoadCase(double F_Ed,double H_Ed,string name)
         {
-            
-            _loadCases.Add(new LoadCase(F_Ed, H_Ed, this));
+            _loadCases.Add(new LoadCase(F_Ed, H_Ed, this,name));
         }
 
 
